@@ -1,0 +1,11 @@
+VKDownloader
+
+Downloads your VKontakte audio files
+
+Need to set your VK.com username and password in config.ini first
+
+  * Copy/rename config.ini.example to config.ini
+  * Open in text editor and enter your details
+  
+Usage:
+  python login.py
