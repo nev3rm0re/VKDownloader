@@ -21,25 +21,6 @@ urls = [('http://cs1104.vkontakte.ru/u5199746/audio/2e1bc7e28b70.mp3','file1.mp3
         ('http://cs4700.vkontakte.ru/u1213200/audio/537007ab2c7c.mp3', 'file10.mp3'),
         ('http://cs4502.vkontakte.ru/u6420401/audio/f8bb388d9655.mp3', 'file11.mp3')]
 
-def dlProgress(count, blockSize, totalSize):
-    percent = int(count * blockSize * 100 / totalSize)
-    print "...%d%%" % percent
-
-class DownloadQueue(Queue.Queue):
-    def get(self, block=True, timeout=None):
-        item = Queue.Queue.get(self, block, timeout)
-        print 'got %r' % (item,)
-        return item
-    def put(self, item, block=True, timeout=None):
-        Queue.Queue.put(self, item, block, timeout)
-        print 'new (of %s jobs): %r' % (self.unfinished_tasks, item)
-        
-    def task_done(self):
-        Queue.Queue.task_done(self)
-        print 'job count: %s' % self.unfinished_tasks
-
-queue = DownloadQueue()
-
 class ThreadUrl(threading.Thread):
     """Threaded Url Grab"""
     def __init__(self, queue):
@@ -48,35 +29,29 @@ class ThreadUrl(threading.Thread):
         
     def run(self):
         while True:
-#            grabs host from queue
             (url, filename) = self.queue.get()
-            
-            
-            u = urllib2.urlopen(url)
-            meta = u.info()
-#            filename = url.split("/")[-1]
-            
-            print "Downloading %s and saving it as %s" % (url, filename)
-            
-            urllib.urlretrieve(url, filename, reporthook=dlProgress)
-            
-            localfile = open(filename, 'wb');
-            localfile.write(u.read())
-            localfile.close()
-            
-            print "Done with %s" % filename
+            print "Downloading %s and saving it as %s" % (url.split("/")[-1], filename),
+            urllib.urlretrieve(url, filename)
+            print " %s done." % url.split("/")[-1]
             self.queue.task_done()
             
-start= time.time()
-def main():
-    for url in urls[1:3]:
-        queue.put(url)
+            
+class Downloader():
+    def __init__(self, url_list):
+        self.queue = Queue.Queue()
         
-    for i in range(5):
-        t = ThreadUrl(queue)
-        t.setDaemon(True)
-        t.start()
-    queue.join()
-    
-main()
-print "Elapsed time: %s" % (time.time() - start)
+        for url in url_list:
+            self.queue.put(url)
+        
+    def startDownload(self):
+        print "Starting download"
+        for dummy in range(5):
+            t = ThreadUrl(self.queue)
+            t.setDaemon(True)
+            t.start()
+            
+        self.queue.join();
+            
+if __name__ == "__main__":
+    downloader = Downloader(urls[1:3])
+    downloader.startDownload()

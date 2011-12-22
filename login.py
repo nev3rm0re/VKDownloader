@@ -8,6 +8,7 @@ import ConfigParser
 
 import string
 import unicodedata
+from  download import *
 
 import HTMLParser
 
@@ -92,18 +93,21 @@ class WebGamePlayer(object):
         json_decoded    = json.loads(response_html)
         h = HTMLParser.HTMLParser()
         
+        urls = []
+        
         for a in json_decoded["all"]:
             filename = cleanUpForFilename(h.unescape(" - ".join(a[5:7])))
-#            filename = filename.encode('utf-8')
-#            filename = unicode(filename, 'utf-8')
-#            filename codecs.getdecoder("unicode_escape")(filename)[0]
-            if len(filename) > 100:
-                filename = filename[:125]
-            print filename
-            print repr(filename)
-            codecs.open(u'/tmp/login/' + filename + u'.mp3', 'w', encoding='utf-8').close()
-                            
 
+            if a[8] == "21065591":
+                if len(filename) > 100:
+                    filename = filename[:125]
+                
+                urls.append((a[2], filename + ".mp3"))
+            
+        downloader = Downloader(urls)
+        downloader.startDownload()
+        
+        
 config = ConfigParser.ConfigParser()
 config.read("config.ini")
 vk_username = config.get('login details', 'login')
