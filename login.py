@@ -17,6 +17,9 @@ def cleanUpForFilename(string):
     filename = re.sub(' +', ' ', filename)
     return filename
 
+def fix_vk_json(string):
+    return re.sub('([\[\],]?)\'(,?)', '\\1"\\2', string)
+
 class WebGamePlayer(object):
     def __init__(self, login, password):
         """ Start up... """
@@ -29,8 +32,8 @@ class WebGamePlayer(object):
         try:
             self.cj.load()
             requires_login = False
-        except cookielib.LoadError:
-            print "no cookies found"
+        except IOError:
+            pass
             
         self.opener = urllib2.build_opener(
             urllib2.HTTPRedirectHandler(),
@@ -46,10 +49,7 @@ class WebGamePlayer(object):
         # need this twice - once to set cookies, once to log in...
         if requires_login:
             self.loginToVK()
-            self.loginToVK()
             self.cj.save()
-        
-        print self.getAudio()
         
     def loginToVK(self):
         """
@@ -84,11 +84,24 @@ class WebGamePlayer(object):
         
         response_html = response_splitted[-2]
         
-        response_html = re.sub('([\[\],]?)\'(,?)', '\\1"\\2', response_html)
+        json_decoded = json.loads(fix_vk_json(response_splitted[-1]))
+        albums = json_decoded["albums"].values()
+            
+        index = 0
         
-        f = codecs.open('/tmp/login_dump.txt', mode='w', encoding='utf-8')
-        f.write(response_html)
-        f.close()
+        print "[%d] [%s]" % (1, "*all*")
+        
+        for index, data in enumerate(albums):
+            print "[%d] [%s]" % (index + 2, data["title"])
+        
+        selected_album = raw_input("Select album from list [1-%d]: " % (int(index) + 2, ))
+        
+        if selected_album == 1:
+            album_id = None
+        else:
+            album_id = albums[int(selected_album)-2]['id']
+            
+        response_html = fix_vk_json(response_html)
         
         json_decoded    = json.loads(response_html)
         h = HTMLParser.HTMLParser()
@@ -97,20 +110,24 @@ class WebGamePlayer(object):
         
         for a in json_decoded["all"]:
             filename = cleanUpForFilename(h.unescape(" - ".join(a[5:7])))
-
-            if a[8] == "21065591":
+            if (album_id == None or a[8] == album_id):
                 if len(filename) > 100:
                     filename = filename[:125]
-                
                 urls.append((a[2], filename + ".mp3"))
             
         downloader = Downloader(urls)
+        print urls
         downloader.startDownload()
         
         
 config = ConfigParser.ConfigParser()
-config.read("config.ini")
-vk_username = config.get('login details', 'login')
-vk_password = config.get('login details', 'password')
+read_status = config.read("config.ini")
+if len(read_status) == 0:
+    from config import *
+    (vk_username, vk_password) = ask_for_login()
+else: 
+    vk_username = config.get('login details', 'username')
+    vk_password = config.get('login details', 'password')
 
 f = WebGamePlayer(vk_username,vk_password)
+f.getAudio()
