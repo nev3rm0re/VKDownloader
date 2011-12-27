@@ -38,4 +38,4 @@ def ask_for_login():
     return (username, password)
 
 if __name__ == "__main__":
-    main()
+    ask_for_login()
