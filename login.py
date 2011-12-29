@@ -63,25 +63,29 @@ class WebGamePlayer(object):
         return ''.join(response.readlines())
     
     def getAudio(self):
-        self.opener.open('http://vkontakte.ru/audio')
+        audio_url = "http://vkontakte.ru/audio"
         
-        self.opener.addheaders = [('X-Requested-With', ('XMLHttpRequest')), ('Referer', ('http://vkontakte.ru/audio'))]
+        # extract user_id from response
+        response = self.opener.open(audio_url)
+        response = ''.join(response.readlines())
         
+        matches = re.search('a name="(\d+)_', response)
+        user_id = matches.group(1)
+        
+        self.opener.addheaders = [('X-Requested-With', 'XMLHttpRequest'), ('Referer', audio_url)]
         post_data = urllib.urlencode({
           'act' : 'load_audios_silent',
           'al'  : '1',
           'edit': '0',
           'gid' : '0',
-          'id'  : '5199746'})
+          'id'  : user_id})
         
-        response = self.opener.open('http://vkontakte.ru/audio', post_data)
+        
+        response = self.opener.open(audio_url, post_data)
         
         response_html   = ''.join(response.readlines())
-        
         response_html   = response_html.decode('windows-1251');
-        
         response_splitted = response_html.split('<!>')
-        
         response_html = response_splitted[-2]
         
         json_decoded = json.loads(fix_vk_json(response_splitted[-1]))
