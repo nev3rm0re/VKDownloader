@@ -3,18 +3,27 @@ import wx
 import urllib
 import random
 
-class MyApp(wx.App):
+class MyFrame(wx.Frame):
     def __init__(self, *args, **kwargs):
-        wx.App.__init__(self, args, kwargs)
+        super(MyFrame, self).__init__(*args, **kwargs)
         
-        self.frame = wx.Frame(None, wx.ID_ANY, "Hello world")
-        self.frame.Show(True)
+        self.InitUI()
         
+    def InitUI(self):
         self.gauges = list()
         self.labels = list()
         
+        menubar = wx.MenuBar()
+        filemenu = wx.Menu()
+        fitem = filemenu.Append(wx.ID_EXIT, 'Exit', 'Exit application')
+        menubar.Append(filemenu, '&File')
+        self.SetMenuBar(menubar)
+        
+        self.Bind(wx.EVT_MENU, self.OnQuit, fitem)
+                       
+        
         for x in xrange(5):
-            gauge = wx.Gauge(parent=self.frame, 
+            gauge = wx.Gauge(parent=self, 
                              range = 100, 
                              pos = (175, 100 + x * 15), 
                              size=(200, 15))
@@ -22,20 +31,26 @@ class MyApp(wx.App):
             gauge.SetBezelFace(3)
             gauge.SetShadowWidth(2)
             
-            label = wx.StaticText(self.frame)
+            label = wx.StaticText(self)
             
             self.labels.append(label)
             self.gauges.append(gauge)
             
 #       buttons
-        self.btn1 = wx.Button(self.frame, wx.ID_OK)
+        self.btn1 = wx.Button(self, wx.ID_OK)
         self.btn1.SetLabel("Start")
         
-        self.frame.Bind(wx.EVT_BUTTON, self.onok, self.btn1)
+        self.Bind(wx.EVT_BUTTON, self.onok, self.btn1)
+        
+        self.Show(True)
+        
             
+    def OnQuit(self, event):
+        self.Close()
+
     def onok(self, event):
         number = int(random.uniform(0, 4))
-        urllib.urlretrieve('http://cs4647.vkontakte.ru/u73018045/audio/874fed1e35e2.mp3',
+        urllib.urlretrieve('http://cs4246.vkontakte.ru/u31558245/audio/cc41ab8ba4bd.mp3',
                            "file.mp3",
                            reporthook=lambda bc, bs, ts, number=number: self.reporthook(bc, bs, ts, number))
     
@@ -48,7 +63,8 @@ class MyApp(wx.App):
         self.gauges[number].SetValue(value)
         self.Yield()
 def main():
-    app = MyApp(False)
+    app = wx.App()
+    MyFrame(None)
     app.MainLoop()
     
 
