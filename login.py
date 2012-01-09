@@ -100,7 +100,7 @@ class WebGamePlayer(object):
             urls_by_id[song_id] = song_data 
             
             if album_id in urls_by_album:
-                urls_by_album[album_id] += song_id
+                urls_by_album[album_id] += [song_id]
             else:
                 urls_by_album[album_id] = [song_id]
                 
@@ -169,6 +169,7 @@ class WebGamePlayer(object):
             
         if album_id is not None:
             urls = []
+            print self.urls_by_album[album_id]
             for id in self.urls_by_album[album_id]:
                 urls.append(self.urls_by_id[id])
         else:
